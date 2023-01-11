@@ -47,21 +47,6 @@ def pick_page(results):
     return f"결과 확인을 위해 링크로 이동해주세요 > {picked_url}, 리뷰 감정 분석 결과 : {sentiment}"
 
 
-def get_channel_id(payload):
-    """
-    a function to return channel_id of channel from which user calls slack bot.
-    :param payload: slack message containing channel_id[]
-    :return: channel_id
-    """
-    string = payload.decode('utf-8')
-    params = string.split("&")
-    for param in params:
-        if param.startswith("channel_id"):
-            channel_id = param.split("=")[-1]
-            return channel_id
-    return None
-
-
 def send_slack_msg(msg, channel_id):
     """
     a function to send Slack message to a specific channel.
@@ -107,8 +92,8 @@ def filter_by_tag(tag: str):
     for page in results:
         tag_dict_list = page['properties']['종목']['multi_select']
 
-        for dict in tag_dict_list:
-            if dict['name'] == tag:
+        for tag_dict in tag_dict_list:
+            if tag_dict['name'] == tag:
                 filtered_pages.append(page)
 
     return filtered_pages
