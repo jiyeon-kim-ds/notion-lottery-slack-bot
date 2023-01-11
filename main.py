@@ -33,5 +33,5 @@ async def post_random_pick(
     res = send_slack_msg(message, channel_id)
 
     if res.status_code == 200:
-        return {"message": "success"}  # when requests succeed
-    return {"return": "Slack API 연동 실패"}  # when requests fail
+        return {"message": "success"}
+    return {"return": "Slack API 연동 실패"}

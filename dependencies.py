@@ -2,7 +2,7 @@ import requests
 import json
 import random
 
-from config import NOTION_TOKEN, DB_ID, SLACK_TOKEN, CLOVA_CLIENT_ID, CLOVA_CLIENT_SECRET
+from config import settings
 
 
 def get_notion_pages():
@@ -10,8 +10,8 @@ def get_notion_pages():
     a function to return randomly picked Notion page.
     :return: dictionary
     """
-    token = NOTION_TOKEN
-    db_id = DB_ID
+    token = settings.NOTION_TOKEN
+    db_id = settings.DB_ID
 
     url = f"https://api.notion.com/v1/databases/{db_id}/query"
     headers = {
@@ -71,7 +71,7 @@ def send_slack_msg(msg, channel_id):
     """
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {SLACK_TOKEN}"
+        "Authorization": f"Bearer {settings.SLACK_TOKEN}"
     }
     data = json.dumps({
         "channel": channel_id,
@@ -84,8 +84,8 @@ def send_slack_msg(msg, channel_id):
 
 def analyze_sentiment(review: str):
     headers = {
-        "X-NCP-APIGW-API-KEY-ID": CLOVA_CLIENT_ID,
-        "X-NCP-APIGW-API-KEY": CLOVA_CLIENT_SECRET,
+        "X-NCP-APIGW-API-KEY-ID": settings.CLOVA_CLIENT_ID,
+        "X-NCP-APIGW-API-KEY": settings.CLOVA_CLIENT_SECRET,
         "Content-Type": "application/json"
     }
 
