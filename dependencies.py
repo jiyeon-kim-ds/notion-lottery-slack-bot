@@ -2,10 +2,10 @@ import requests
 import json
 import random
 
-from config import NOTION_TOKEN, DB_ID, SLACK_TOKEN
+from config import NOTION_TOKEN, DB_ID, SLACK_TOKEN, CLOVA_CLIENT_ID, CLOVA_CLIENT_SECRET
 
 
-def get_notion_page():
+def get_notion_pages():
     """
     a function to return randomly picked Notion page.
     :return: dictionary
@@ -24,28 +24,33 @@ def get_notion_page():
 
     results = response.json().get("results")
 
-    picked = random.choice(results)
-
-    return picked
+    return results
 
 
-def pick_page():
+def pick_page(results):
     """
     a function to return message containing randomly picked Notion page's property/
     :return: string
     """
-    picked = get_notion_page()
+    picked = random.choice(results)
+
+    review = picked["properties"]["가본사람 의견"]["rich_text"]
+
+    if review:
+        sentiment = analyze_sentiment(review[0]['text']['content'])
+    else:
+        sentiment = "리뷰가 없습니다."
 
     # put your properties' keys
     picked_url = picked.get("properties").get("지도링크").get("url")
 
-    return f"결과 확인을 위해 링크로 이동해주세요 > {picked_url}"
+    return f"결과 확인을 위해 링크로 이동해주세요 > {picked_url}, 리뷰 감정 분석 결과 : {sentiment}"
 
 
 def get_channel_id(payload):
     """
     a function to return channel_id of channel from which user calls slack bot.
-    :param payload: slack message containing channel_id
+    :param payload: slack message containing channel_id[]
     :return: channel_id
     """
     string = payload.decode('utf-8')
@@ -75,3 +80,47 @@ def send_slack_msg(msg, channel_id):
     response = requests.post("https://slack.com/api/chat.postMessage", headers=headers, data=data)
 
     return response
+
+
+def analyze_sentiment(review: str):
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": CLOVA_CLIENT_ID,
+        "X-NCP-APIGW-API-KEY": CLOVA_CLIENT_SECRET,
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "content": review
+    }
+
+    url = "https://naveropenapi.apigw.ntruss.com/sentiment-analysis/v1/analyze"
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    return response.json().get('document', {}).get('sentiment')
+
+
+def filter_by_tag(tag: str):
+    results = get_notion_pages()
+
+    filtered_pages = []
+    for page in results:
+        tag_dict_list = page['properties']['종목']['multi_select']
+
+        for dict in tag_dict_list:
+            if dict['name'] == tag:
+                filtered_pages.append(page)
+
+    return filtered_pages
+
+
+def get_element_from_message(payload, element):
+    string = payload.decode('utf-8')
+
+    params = string.split("&")
+
+    for param in params:
+        if param.startswith(element):
+            element = param.split("=")[-1]
+            return element
+    return None
